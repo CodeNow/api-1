@@ -13,10 +13,20 @@ const mongoHost = process.env.MONGODB_HOST || 'localhost:27017'
 const appInfo = require('./package.json')
 const launched = new Date()
 
+let connectionAttempts = 0
+
 mongoose.connect(`mongodb://${mongoHost}/todo`)
 mongoose.connection.on('error', () => {
-  console.log('ERROR: Unable to connect to MongoDB... retrying')
-  mongoose.connect(`mongodb://${mongoHost}/todo`)
+  if (connectionAttempts > 10) {
+    console.log('Unable to connect to MongoDB, exiting.')
+    process.exit(1);
+  }
+  console.log('ERROR: Unable to connect to MongoDB... waiting 5 seconds')
+  setTimeout(function () {
+    console.log('Retrying connection to MongoDB')
+    mongoose.connect(`mongodb://${mongoHost}/todo`)
+    connectionAttempts += 1
+  }, 5000)
 })
 
 const todos = require('./todos')
